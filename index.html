@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Apex Open World 3D Car Simulator</title>
+  <meta name="description" content="Ultra-realistic 3D open world car simulator game featuring luxury supercars, animated human drivers and pedestrians, realistic city, mountains, rivers, day-night cycle and dynamic weather." />
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;800;900&family=Rajdhani:wght@500;600;700&family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+  
+  <link rel="stylesheet" href="style.css" />
+  
+  <!-- Three.js (Local offline with CDN fallback) -->
+  <script src="libs/three.min.js"></script>
+  <script>
+    if (typeof THREE === 'undefined') {
+      document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script>');
+    }
+  </script>
+</head>
+<body>
+
+  <!-- Game 3D Viewport Canvas Container -->
+  <div id="game-canvas-container"></div>
+
+  <!-- Loading Screen -->
+  <div id="loading-screen" class="active">
+    <div class="loader-content">
+      <div class="brand-crest">
+        <div class="crest-icon">🏎️</div>
+        <h1>APEX 3D</h1>
+        <p class="tagline">ULTRA-REALISTIC OPEN WORLD SIMULATOR</p>
+      </div>
+      <div class="progress-bar-wrap">
+        <div id="loading-progress-bar" class="progress-bar"></div>
+      </div>
+      <p id="loading-status-text" class="status-text">Generating Open World & Physics...</p>
+    </div>
+  </div>
+
+  <!-- Main Menu Overlay -->
+  <div id="main-menu" class="game-overlay">
+    <div class="menu-backdrop"></div>
+    <div class="menu-content">
+      <div class="menu-header">
+        <div class="brand-badge">NEXT-GEN 3D ENGINE</div>
+        <h1 class="game-title">APEX <span class="gradient-text">OPEN WORLD</span></h1>
+        <p class="game-subtitle">City • Mountains • Forests • Rivers • Realistic Physics</p>
+      </div>
+
+      <div class="menu-actions">
+        <button id="btn-start-game" class="btn btn-primary btn-glow">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+          <span>START DRIVING</span>
+        </button>
+        <button id="btn-open-garage" class="btn btn-secondary">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><circle cx="12" cy="14" r="4"></circle></svg>
+          <span>GARAGE & CARS</span>
+        </button>
+        <button id="btn-open-controls" class="btn btn-secondary">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="M6 12h4m-2-2v4m8-2h.01m3-2h.01"></path></svg>
+          <span>CONTROLS GUIDE</span>
+        </button>
+      </div>
+
+      <div class="quick-specs-strip">
+        <div class="spec-pill"><span>🌆</span> Modern City & Highway</div>
+        <div class="spec-pill"><span>🏔️</span> Mountain Switchbacks & Tunnels</div>
+        <div class="spec-pill"><span>🌉</span> Suspension River Bridge</div>
+        <div class="spec-pill"><span>🚶</span> Animated Pedestrians & Driver</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Garage / Car Selection Screen -->
+  <div id="garage-menu" class="game-overlay" style="display:none;">
+    <div class="garage-header">
+      <h2>SUPERCAR <span class="gradient-text">GARAGE</span></h2>
+      <button id="btn-close-garage" class="close-btn" aria-label="Back to Menu">&times;</button>
+    </div>
+
+    <!-- Car Selector Carousel -->
+    <div class="garage-car-selector">
+      <button id="garage-prev-car" class="nav-arrow">&lang;</button>
+      <div class="car-info-card">
+        <div id="garage-car-brand" class="car-brand">ITALIAN HYPERCAR</div>
+        <h3 id="garage-car-name" class="car-name">Lamborghini Aventador SVJ</h3>
+        <p id="garage-car-desc" class="car-desc">Ultra-aerodynamic V12 AWD hypercar with razor-sharp handling and extreme top speed.</p>
+        
+        <!-- Specs Bars -->
+        <div class="specs-grid">
+          <div class="spec-bar-wrap">
+            <span class="spec-label">TOP SPEED</span>
+            <div class="bar-outer"><div id="spec-speed-bar" class="bar-inner" style="width: 95%;"></div></div>
+            <span id="spec-speed-val" class="spec-val">350 KM/H</span>
+          </div>
+          <div class="spec-bar-wrap">
+            <span class="spec-label">ACCELERATION</span>
+            <div class="bar-outer"><div id="spec-accel-bar" class="bar-inner" style="width: 92%;"></div></div>
+            <span id="spec-accel-val" class="spec-val">2.8s 0-100</span>
+          </div>
+          <div class="spec-bar-wrap">
+            <span class="spec-label">HANDLING & DRIFT</span>
+            <div class="bar-outer"><div id="spec-handle-bar" class="bar-inner" style="width: 90%;"></div></div>
+            <span id="spec-handle-val" class="spec-val">9.5/10</span>
+          </div>
+        </div>
+
+        <!-- Color Palette -->
+        <div class="color-picker-group">
+          <span class="picker-label">EXTERIOR PAINT:</span>
+          <div class="color-options" id="color-palette">
+            <!-- Populated via JS -->
+          </div>
+        </div>
+      </div>
+      <button id="garage-next-car" class="nav-arrow">&rang;</button>
+    </div>
+
+    <div class="garage-footer">
+      <button id="btn-select-car-drive" class="btn btn-primary btn-glow">
+        <span>DRIVE THIS CAR</span>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Controls Guide Modal -->
+  <div id="controls-modal" class="game-overlay" style="display:none;">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3>SIMULATOR CONTROLS</h3>
+        <button id="btn-close-controls" class="close-btn">&times;</button>
+      </div>
+      <div class="controls-grid">
+        <div class="ctrl-item"><span class="key-badge">W</span> or <span class="key-badge">↑</span> <strong>Accelerate / Throttle</strong></div>
+        <div class="ctrl-item"><span class="key-badge">S</span> or <span class="key-badge">↓</span> <strong>Brake / Reverse</strong></div>
+        <div class="ctrl-item"><span class="key-badge">A</span> / <span class="key-badge">D</span> or <span class="key-badge">←</span> / <span class="key-badge">→</span> <strong>Steer Left / Right</strong></div>
+        <div class="ctrl-item"><span class="key-badge">SPACE</span> <strong>Handbrake & Drift</strong></div>
+        <div class="ctrl-item"><span class="key-badge">SHIFT</span> <strong>Nitro Boost 🔥</strong></div>
+        <div class="ctrl-item"><span class="key-badge">C</span> <strong>Change Camera (Cockpit / Chase / Hood)</strong></div>
+        <div class="ctrl-item"><span class="key-badge">H</span> <strong>Car Horn 📢</strong></div>
+        <div class="ctrl-item"><span class="key-badge">L</span> <strong>Headlights Toggle 💡</strong></div>
+        <div class="ctrl-item"><span class="key-badge">R</span> <strong>Reset Car Position</strong></div>
+        <div class="ctrl-item"><span class="key-badge">ESC</span> / <span class="key-badge">P</span> <strong>Pause Game</strong></div>
+      </div>
+      <p class="mobile-note">📱 On mobile devices, touch steering buttons, gas pedal, brake pedal, nitro, and camera buttons are provided on screen!</p>
+    </div>
+  </div>
+
+  <!-- In-Game Heads Up Display (HUD) -->
+  <div id="game-hud" style="display:none;">
+
+    <!-- Top Status Bar -->
+    <div class="hud-top-bar">
+      <!-- Weather & Time of Day Widget -->
+      <div class="hud-weather-widget" id="hud-weather-widget" title="Click to cycle weather">
+        <span id="weather-icon" class="weather-icon">☀️</span>
+        <div class="weather-info">
+          <span id="time-display" class="time-text">14:00 NOON</span>
+          <span id="weather-display" class="weather-text">CLEAR SUNNY</span>
+        </div>
+      </div>
+
+      <!-- Quick Action Buttons -->
+      <div class="hud-top-actions">
+        <button id="btn-toggle-camera" class="hud-circle-btn" title="Switch Camera (C)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+        </button>
+        <button id="btn-toggle-lights" class="hud-circle-btn" title="Headlights (L)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line></svg>
+        </button>
+        <button id="btn-car-horn" class="hud-circle-btn" title="Horn (H)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+        </button>
+        <button id="btn-reset-car" class="hud-circle-btn" title="Reset Car (R)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path></svg>
+        </button>
+        <button id="btn-pause-game" class="hud-circle-btn" title="Pause Menu (ESC)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Circular Radar Mini-Map (Top-Left) -->
+    <div class="hud-minimap-wrap">
+      <div class="minimap-frame">
+        <canvas id="minimap-canvas" width="160" height="160"></canvas>
+        <div class="minimap-player-marker"></div>
+        <div class="minimap-compass">N</div>
+      </div>
+      <div id="hud-location-name" class="location-label">DOWNTOWN BOULEVARD</div>
+    </div>
+
+    <!-- Active Camera Mode Watermark -->
+    <div id="hud-camera-label" class="camera-mode-badge">CHASE CAM</div>
+
+    <!-- Telemetry Speedometer & Gauge Cluster (Bottom-Right) -->
+    <div class="hud-cluster">
+      <!-- Nitro Boost Gauge -->
+      <div class="nitro-gauge-wrap">
+        <div class="nitro-label">NITRO BOOST [SHIFT]</div>
+        <div class="nitro-bar-track">
+          <div id="hud-nitro-fill" class="nitro-bar-fill" style="width: 100%;"></div>
+        </div>
+      </div>
+
+      <!-- Main Gauge Dial -->
+      <div class="gauge-dial-container">
+        <!-- SVG Gauge Arc -->
+        <svg class="gauge-svg" viewBox="0 0 220 220">
+          <!-- Background Track -->
+          <circle cx="110" cy="110" r="85" class="gauge-track" />
+          <!-- RPM Arc -->
+          <circle cx="110" cy="110" r="85" class="gauge-rpm-fill" id="gauge-rpm-circle" />
+          <!-- Speed Arc -->
+          <circle cx="110" cy="110" r="70" class="gauge-speed-fill" id="gauge-speed-circle" />
+        </svg>
+
+        <!-- Speedometer Center Readout -->
+        <div class="gauge-center-content">
+          <div class="gear-indicator" id="hud-gear">1</div>
+          <div class="speed-number" id="hud-speed">0</div>
+          <div class="speed-unit">KM/H</div>
+        </div>
+      </div>
+
+      <!-- Sub-indicators: Fuel & RPM -->
+      <div class="gauge-sub-info">
+        <div class="sub-meter">
+          <span class="sub-label">RPM</span>
+          <span class="sub-val" id="hud-rpm-val">900</span>
+        </div>
+        <div class="sub-meter">
+          <span class="sub-label">FUEL</span>
+          <span class="sub-val" id="hud-fuel-val">98%</span>
+        </div>
+        <div class="sub-meter">
+          <span class="sub-label">ODOMETER</span>
+          <span class="sub-val" id="hud-odo-val">0.0 KM</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile Touch Controls (Automatically displayed on mobile/tablet or touch device) -->
+    <div id="mobile-controls" class="mobile-controls-layer">
+      <!-- Left: Steering -->
+      <div class="touch-group touch-left">
+        <button id="touch-left" class="touch-btn touch-steer" aria-label="Steer Left">◀</button>
+        <button id="touch-right" class="touch-btn touch-steer" aria-label="Steer Right">▶</button>
+      </div>
+
+      <!-- Right: Pedals & Boost -->
+      <div class="touch-group touch-right">
+        <button id="touch-nitro" class="touch-btn touch-nitro-btn" aria-label="Nitro Boost">🔥 NITRO</button>
+        <button id="touch-brake" class="touch-btn touch-brake-btn" aria-label="Brake / Reverse">BRAKE</button>
+        <button id="touch-gas" class="touch-btn touch-gas-btn" aria-label="Gas / Accelerate">GAS</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pause Menu -->
+  <div id="pause-menu" class="game-overlay" style="display:none;">
+    <div class="modal-dialog">
+      <h2>GAME PAUSED</h2>
+      <div class="pause-actions">
+        <button id="btn-resume-game" class="btn btn-primary btn-glow">RESUME DRIVING</button>
+        <button id="btn-switch-car-pause" class="btn btn-secondary">CHANGE VEHICLE</button>
+        <button id="btn-restart-game" class="btn btn-secondary">RESTART SIMULATOR</button>
+        <button id="btn-audio-toggle" class="btn btn-secondary">SOUND: <span id="sound-state-text">ON</span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rain Droplets Screen Effect -->
+  <div id="rain-screen-overlay" class="rain-overlay" style="display:none;"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>
